@@ -40,3 +40,10 @@ https://hardairmagazine.com/ham-columns/pcp-airgun-internal-ballistics/
 https://hardairmagazine.com/ham-columns/how-to-obtain-the-maximum-power-from-a-pcp-air-rifle/
 https://www.gatewaytoairguns.org/GTA/index.php?topic=15866.0  
 https://www.airgundepot.com/vault/articles/fps-or-fpe-whats-the-difference/
+
+# Airsoft
+DC-DC, voltage + current limit : https://tapegysegek.hu/spl/473072/DC-DC-Lefele-allithato-feszultseg-es-aram-Step-Dow
+9,6 V nimh battery, how to charge ?
+golden eagle HK416
+https://cad.onshape.com/signin - models for rifle parts
+
