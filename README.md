@@ -47,3 +47,7 @@ DC-DC, voltage + current limit : https://tapegysegek.hu/spl/473072/DC-DC-Lefele-
 golden eagle HK416
 https://cad.onshape.com/signin - models for rifle parts
 
+# Energy
+Daily avg. consumption : 11 kWh ( 11 * 3600 * 1000 J) -> ~ 40MJ
+Conversion factor of avg, hydro gen system : 50% ( 1J height energy -> 0.5J electrical energy)
+10m head, 50% convesion efficiency. -> 40 + 10'6 J = 0,5 * 10 m * 1000 kg/m3 * 9.81 m/s'2 * x --> x = 800 (ton of water) 20x20x2 meter reservouir
