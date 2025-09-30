@@ -1,5 +1,9 @@
 #include <iostream>
 
+
+// user defined headers to see protypes and types
+#include "browserLauncher.hpp"
+
 //g++ -Wall *.cpp -o tibet
 
 // number of arguments : argc
@@ -8,10 +12,9 @@ int main(int argc, char *argv[])
 {
     std::cout << "Tibet Application" << std::endl;
 
-    
+    BrowserLauncher launcher;
 
-
-
+    launcher.launch("https://google.com");
 
 
 
