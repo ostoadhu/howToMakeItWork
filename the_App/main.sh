@@ -1,0 +1,76 @@
+
+# end of script
+
+# global variables
+window_ID=0;
+
+function open_session()
+{
+    setsid chromium "tippmixpro.hu" &> /dev/null &
+    xdotool sleep 1
+    xdotool search --sync --onlyvisible --name "Tipp" > /home/debian/Desktop/chromium_ID.txt
+    window_ID=$(xdotool search --sync --onlyvisible --name "Tipp" | head -n 1)
+}
+
+function create_snapshot()
+{
+    echo "$window_ID"
+    xdotool sleep 4;
+    import -window "$window_ID" /home/debian/Desktop/snapshot.png
+}
+
+function get_window_coordinates()
+{
+    eval $(xdotool getwindowgeometry --shell "$window_ID");
+    echo "X : $X"
+    echo "Y : $Y"
+    echo "WIDTH : $WIDTH"
+    echo "HEIGHT : $HEIGHT"
+}
+
+function click_in_window()
+{
+    xdotool windowfocus "$window_ID";
+    xdotool windowactivate "$window_ID";
+    xdotool mousemove $1 $2 click 1;
+}
+
+function call_gemini()
+{
+    PROMPT=$1
+    echo "$PROMPT"
+    RESULT=$(echo "$PROMPT" | gemini)
+    echo "$RESULT"    
+}
+
+function getNeedleImageCoordinates()
+{
+	echo "haystack_image : -$1-"
+	echo "needle_image : -$2-"
+    RESULT=$(compare -metric RMSE -subimage-search "$1" "$2" null:)
+    echo "$RESULT"
+}
+
+rm /home/debian/Desktop/chromium_ID.txt;
+rm /home/debian/Desktop/snapshot.png;
+echo "";
+
+#open_session;
+#create_snapshot;
+#get_window_coordinates;
+
+PROMPT="There is an output.tsv file on the Desktop. Analyse it. 
+Find összes elutasítása button content. 
+If found, answer only with the coordinates of the button in a pattern like X,Y,WIDTH,HEIGHT. 
+If not found respond with -1,-1,-1,-1"
+
+#call_gemini "$PROMPT"
+
+getNeedleImageCoordinates "/home/debian/Desktop/snapshot_2.png" "/home/debian/Desktop/ref_login.png"
+
+
+
+
+
+
+
