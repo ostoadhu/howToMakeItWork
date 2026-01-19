@@ -1,10 +1,8 @@
 
-# end of script
-
 # global variables
 window_ID=0;
 
-function open_session()
+function open_chromium_session()
 {
     setsid chromium "tippmixpro.hu" &> /dev/null &
     xdotool sleep 1
@@ -28,6 +26,7 @@ function get_window_coordinates()
     echo "HEIGHT : $HEIGHT"
 }
 
+# arguments : 1.x 2.y
 function click_in_window()
 {
     xdotool windowfocus "$window_ID";
@@ -35,6 +34,7 @@ function click_in_window()
     xdotool mousemove $1 $2 click 1;
 }
 
+#arguments : prompt as string
 function call_gemini()
 {
     PROMPT=$1
@@ -43,6 +43,7 @@ function call_gemini()
     echo "$RESULT"    
 }
 
+# argumens : 1.haystack 2.needle
 function getNeedleImageCoordinates()
 {
 	echo "haystack_image : -$1-"
@@ -51,6 +52,8 @@ function getNeedleImageCoordinates()
     echo "$RESULT"
 }
 
+########################################################################
+########################################################################
 rm /home/debian/Desktop/chromium_ID.txt;
 rm /home/debian/Desktop/snapshot.png;
 echo "";
