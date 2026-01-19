@@ -2,6 +2,43 @@
 # global variables
 window_ID=0;
 
+function IsNodePackageManagerInstalled()
+{
+	if ! command -v npm &> /dev/null; then
+		echo "Error: NodePackageManager is not installed."
+		echo "Consider : sudo apt install nodejs npm"
+		exit 1
+	fi
+}
+
+function IsNodeInstalled()
+{
+	if ! command -v node &> /dev/null; then
+		echo "Error: Node is not installed."
+		echo "Consider : sudo apt install nodejs npm"
+		exit 1
+	fi
+}
+
+function IsNodeVersionManagerInstalled()
+{
+	if ! command -v nvm &> /dev/null; then
+		echo "Error: NodeVersionManager is not installed."
+		echo "Consider : sudo apt install curl -y"
+		echo "curl https://raw.githubusercontent.com/creationix/nvm/master/install.sh | bash "
+		exit 1
+	fi
+}
+
+function isGeminiCliInstalled()
+{
+	if ! command -v gemini &> /dev/null; then
+		echo "Error: Gemini is not installed."
+		echo "Consider :sudo npm install -g @google/gemini-cli"
+		exit 1
+	fi
+}
+
 function open_chromium_session()
 {
     setsid chromium "tippmixpro.hu" &> /dev/null &
@@ -69,11 +106,11 @@ If not found respond with -1,-1,-1,-1"
 
 #call_gemini "$PROMPT"
 
-getNeedleImageCoordinates "/home/debian/Desktop/snapshot_2.png" "/home/debian/Desktop/ref_login.png"
+# getNeedleImageCoordinates "/home/debian/Desktop/snapshot_2.png" "/home/debian/Desktop/ref_login.png"
 
-
-
-
-
+IsNodeInstalled
+IsNodePackageManagerInstalled
+IsNodeVersionManagerInstalled
+isGeminiCliInstalled
 
 
