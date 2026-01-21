@@ -8,6 +8,9 @@ function IsNodePackageManagerInstalled()
 		echo "Error: NodePackageManager is not installed."
 		echo "Consider : sudo apt install nodejs npm"
 		exit 1
+	else
+	    NPM_VERSION=$(npm --version)
+	    echo "npm version : $NPM_VERSION"
 	fi
 }
 
@@ -17,6 +20,9 @@ function IsNodeInstalled()
 		echo "Error: Node is not installed."
 		echo "Consider : sudo apt install nodejs npm"
 		exit 1
+    else
+		NODE_VERSION=$(node --version)
+		echo "node version : $NODE_VERSION"
 	fi
 }
 
@@ -27,6 +33,9 @@ function IsNodeVersionManagerInstalled()
 		echo "Consider : sudo apt install curl -y"
 		echo "curl https://raw.githubusercontent.com/creationix/nvm/master/install.sh | bash "
 		exit 1
+	else
+		NVM_VERSION=$(nvm --version)
+		echo "nvm version : $NVM_VERSION"
 	fi
 }
 
