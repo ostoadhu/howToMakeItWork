@@ -1,3 +1,5 @@
+#!/bin/bash
+source ~/.bashrc
 
 # global variables
 window_ID=0;
@@ -6,7 +8,7 @@ function IsNodePackageManagerInstalled()
 {
 	if ! command -v npm &> /dev/null; then
 		echo "Error: NodePackageManager is not installed."
-		echo "Consider : sudo apt install nodejs npm"
+		echo "    Consider : sudo apt install nodejs npm"
 		exit 1
 	else
 	    NPM_VERSION=$(npm --version)
@@ -18,7 +20,7 @@ function IsNodeInstalled()
 {
 	if ! command -v node &> /dev/null; then
 		echo "Error: Node is not installed."
-		echo "Consider : sudo apt install nodejs npm"
+		echo "    Consider : sudo apt install nodejs npm"
 		exit 1
     else
 		NODE_VERSION=$(node --version)
@@ -30,8 +32,8 @@ function IsNodeVersionManagerInstalled()
 {
 	if ! command -v nvm &> /dev/null; then
 		echo "Error: NodeVersionManager is not installed."
-		echo "Consider : sudo apt install curl -y"
-		echo "curl https://raw.githubusercontent.com/creationix/nvm/master/install.sh | bash "
+		echo "    Consider : sudo apt install curl -y"
+		echo "    curl https://raw.githubusercontent.com/creationix/nvm/master/install.sh | bash "
 		exit 1
 	else
 		NVM_VERSION=$(nvm --version)
@@ -43,8 +45,10 @@ function isGeminiCliInstalled()
 {
 	if ! command -v gemini &> /dev/null; then
 		echo "Error: Gemini is not installed."
-		echo "Consider :sudo npm install -g @google/gemini-cli"
+		echo "    Consider :sudo npm install -g @google/gemini-cli"
 		exit 1
+	else
+	    echo "Gemini seems to be working, check sucessful login !"
 	fi
 }
 
