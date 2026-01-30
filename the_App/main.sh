@@ -4,6 +4,39 @@ source ~/.bashrc
 # global variables
 window_ID=0;
 
+function isPyAtspiInstalled
+{
+	if python3 -c "import pyatspi" &> /dev/null; then
+		echo "pyatspi is installed, all is good !"
+	else
+		echo "pyatspi is NOT installed."
+		echo "    Consider : sudo apt update && sudo apt install python3-pyatspi"
+		exit 1
+	fi
+}
+function isAccerciserInstalled()
+{
+	if ! command -v accerciser $> /dev/null; then
+		echo "Accerciser seems not to be installed !"
+		echo "    Consider : sudo apt install accerciser"
+		exit 1
+	else
+		echo "Accerciser is installed, all is good !"
+	fi
+}
+
+function isWaylandDisplayUsed()
+{
+	RESULT=($XDG_SESSION_TYPE)
+	fi [[ "$RESULT" == "wayland" ]]; then
+		echo "Wayland is used!"
+		echo "Change display manager to X11, accerciser shall need it !"
+		exit 1
+	else
+		echo "X11 is used, all is good !"
+	fi
+}
+
 function IsNodePackageManagerInstalled()
 {
 	if ! command -v npm &> /dev/null; then
@@ -12,7 +45,7 @@ function IsNodePackageManagerInstalled()
 		exit 1
 	else
 	    NPM_VERSION=$(npm --version)
-	    echo "npm version : $NPM_VERSION"
+	    echo "npm version : $NPM_VERSION, all is good !"
 	fi
 }
 
@@ -24,7 +57,7 @@ function IsNodeInstalled()
 		exit 1
     else
 		NODE_VERSION=$(node --version)
-		echo "node version : $NODE_VERSION"
+		echo "node version : $NODE_VERSION, all is good !"
 	fi
 }
 
@@ -37,7 +70,7 @@ function IsNodeVersionManagerInstalled()
 		exit 1
 	else
 		NVM_VERSION=$(nvm --version)
-		echo "nvm version : $NVM_VERSION"
+		echo "nvm version : $NVM_VERSION, all is good !"
 	fi
 }
 
@@ -54,7 +87,7 @@ function isGeminiCliInstalled()
 
 function open_chromium_session()
 {
-    setsid chromium "tippmixpro.hu" &> /dev/null &
+    setsid chromium --force-renderer-accessibility "tippmixpro.hu" &> /dev/null &
     xdotool sleep 1
     xdotool search --sync --onlyvisible --name "Tipp" > /home/debian/Desktop/chromium_ID.txt
     window_ID=$(xdotool search --sync --onlyvisible --name "Tipp" | head -n 1)
@@ -125,5 +158,7 @@ IsNodeInstalled
 IsNodePackageManagerInstalled
 IsNodeVersionManagerInstalled
 isGeminiCliInstalled
+isWaylandDisplayUsed
+isAccerciserInstalled
 
 
