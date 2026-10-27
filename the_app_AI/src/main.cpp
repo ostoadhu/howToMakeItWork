@@ -13,6 +13,7 @@ namespace {
 
 constexpr auto kWindowTimeout = std::chrono::seconds(30);
 constexpr auto kPageLoadDelay = std::chrono::seconds(5);
+constexpr auto kDefaultUrl = "https://www.tippmixpro.hu";
 
 int fail(const std::string& msg)
 {
@@ -24,11 +25,12 @@ int fail(const std::string& msg)
 
 int main(int argc, char* argv[])
 {
-    if (argc < 2 || argc > 3) {
-        std::cerr << "usage: " << argv[0] << " <url> [output.png]\n";
+    if (argc > 3) {
+        std::cerr << "usage: " << argv[0] << " [url] [output.png]\n"
+                  << "  default url: " << kDefaultUrl << '\n';
         return EXIT_FAILURE;
     }
-    const std::string url = argv[1];
+    const std::string url = argc >= 2 ? argv[1] : kDefaultUrl;
     const std::filesystem::path output =
         std::filesystem::absolute(argc == 3 ? argv[2] : "screenshot.png");
 

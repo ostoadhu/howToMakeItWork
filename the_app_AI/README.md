@@ -5,9 +5,11 @@ Minimal C++23 standalone app that drives a browser via external X11 tools
 
 ## Use case 1
 
-`the_app_AI <url> [output.png]`
+`the_app_AI [url] [output.png]`
 
-1. Launches chromium on `<url>` (app mode: window shows only the page content).
+`url` defaults to `https://www.tippmixpro.hu` when omitted.
+
+1. Launches chromium on `url`(app mode: window shows only the page content).
 2. Finds the window with `xdotool`, activates it.
 3. Captures it with ImageMagick `import` (default: `./screenshot.png`).
 4. Opens the screenshot in `gimp`.
@@ -36,7 +38,8 @@ Check with `echo $XDG_SESSION_TYPE` (must print `x11`).
 ```sh
 cmake -S . -B build
 make -C build
-./build/the_app_AI https://example.com
+./build/the_app_AI                       # opens https://www.tippmixpro.hu
+./build/the_app_AI https://example.com   # opens a custom url
 ```
 
 ## Tests
