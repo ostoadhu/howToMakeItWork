@@ -39,12 +39,26 @@ make -C build
 ./build/the_app_AI https://example.com
 ```
 
+## Tests
+
+Unit tests use GoogleTest (downloaded automatically by CMake `FetchContent`).
+Every `tests/test_*.cpp` file is picked up automatically.
+
+```sh
+cmake -S . -B build
+cmake --build build
+ctest --test-dir build --output-on-failure
+```
+
+Disable them with `-DBUILD_TESTING=OFF`.
+
 ## Layout
 
 ```
 CMakeLists.txt
 include/   process.hpp  browser.hpp  screenshot.hpp  session.hpp
 src/       main.cpp  process.cpp  browser.cpp  screenshot.cpp  session.cpp
+tests/     CMakeLists.txt  test_*.cpp
 ```
 
 `process` runs external tools without a shell (no URL injection);

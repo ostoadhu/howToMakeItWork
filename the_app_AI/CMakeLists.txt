@@ -11,16 +11,24 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
-add_executable(the_app_AI
-    src/main.cpp
+# Everything except main.cpp lives in a library so it can be linked by the tests.
+add_library(the_app_AI_core STATIC
     src/process.cpp
     src/browser.cpp
     src/screenshot.cpp
     src/session.cpp
 )
+target_include_directories(the_app_AI_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_compile_options(the_app_AI_core PRIVATE -Wall -Wextra -Wpedantic)
 
-target_include_directories(the_app_AI PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_executable(the_app_AI src/main.cpp)
+target_link_libraries(the_app_AI PRIVATE the_app_AI_core)
 target_compile_options(the_app_AI PRIVATE -Wall -Wextra -Wpedantic)
+
+include(CTest)
+if(BUILD_TESTING)
+    add_subdirectory(tests)
+endif()
 
 # Warn at configure time if runtime tools are missing (they are invoked, not linked).
 foreach(tool chromium xdotool import gimp)
