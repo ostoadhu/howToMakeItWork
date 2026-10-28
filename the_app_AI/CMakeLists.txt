@@ -17,6 +17,8 @@ add_library(the_app_AI_core STATIC
     src/browser.cpp
     src/screenshot.cpp
     src/session.cpp
+    src/ocr.cpp
+    src/input.cpp
 )
 target_include_directories(the_app_AI_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_compile_options(the_app_AI_core PRIVATE -Wall -Wextra -Wpedantic)
@@ -31,7 +33,7 @@ if(BUILD_TESTING)
 endif()
 
 # Warn at configure time if runtime tools are missing (they are invoked, not linked).
-foreach(tool chromium xdotool import gimp)
+foreach(tool chromium xdotool import convert tesseract gimp)
     find_program(_tool_path ${tool})
     if(NOT _tool_path)
         message(WARNING "Runtime dependency '${tool}' not found in PATH")

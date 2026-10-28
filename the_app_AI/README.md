@@ -9,15 +9,30 @@ Minimal C++23 standalone app that drives a browser via external X11 tools
 
 `url` defaults to `https://www.tippmixpro.hu` when omitted.
 
-1. Launches chromium on `url`(app mode: window shows only the page content).
+1. Launches chromium on `url` (app mode: window shows only the page content).
 2. Finds the window with `xdotool`, activates it.
 3. Captures it with ImageMagick `import` (default: `./screenshot.png`).
-4. Opens the screenshot in `gimp`.
+4. Reads the screenshot with `tesseract` (Hungarian). If the cookie banner's
+   "ÖSSZES ELUTASÍTÁSA" (reject all) button is found, clicks its center with
+   `xdotool`, re-captures the window and checks with OCR that the banner is gone.
+   OCR failures are only warnings; the original screenshot is kept.
+5. Opens the screenshot in `gimp`.
+
+### How the screenshot is "read"
+
+- The image is grayscaled and enlarged 2x (`convert`) for better OCR accuracy.
+- `tesseract <img> stdout -l hun --psm 11 tsv` returns every word with its
+  pixel box; coordinates are scaled back to the original screenshot.
+- Words are compared case- and accent-insensitively ("Í" = "I") with a small
+  edit-distance tolerance, since OCR often misreads a letter (e.g. `ELUTASlTÁSA`).
+- The words of the label must be adjacent on the same row; their combined box
+  gives the click point. `import -window` and `xdotool mousemove --window` use
+  the same window-relative coordinates, so no conversion is needed.
 
 ## Dependencies (Debian)
 
 ```sh
-sudo apt install build-essential cmake chromium xdotool imagemagick gimp tesseract-ocr
+sudo apt install build-essential cmake chromium xdotool imagemagick gimp tesseract-ocr tesseract-ocr-hun
 ```
 
 GCC 12+ is required (C++23, `std::expected`).
@@ -59,12 +74,12 @@ Disable them with `-DBUILD_TESTING=OFF`.
 
 ```
 CMakeLists.txt
-include/   process.hpp  browser.hpp  screenshot.hpp  session.hpp
-src/       main.cpp  process.cpp  browser.cpp  screenshot.cpp  session.cpp
+include/   process.hpp  browser.hpp  screenshot.hpp  session.hpp  ocr.hpp  input.hpp
+src/       main.cpp  process.cpp  browser.cpp  screenshot.cpp  session.cpp  ocr.cpp  input.cpp
 tests/     CMakeLists.txt  test_*.cpp
 ```
 
 `process` runs external tools without a shell (no URL injection);
 `browser` handles chromium/xdotool; `screenshot` handles import/gimp;
-`session` detects X11 vs Wayland.
-Tesseract analysis is not part of use case 1 yet.
+`session` detects X11 vs Wayland; `ocr` runs tesseract and locates text
+on the screenshot; `input` clicks inside the window with xdotool.
