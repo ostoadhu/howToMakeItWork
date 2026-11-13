@@ -17,6 +17,7 @@ constexpr auto kWindowTimeout = std::chrono::seconds(30);
 constexpr auto kPageLoadDelay = std::chrono::seconds(5);
 constexpr auto kDefaultUrl = "https://www.tippmixpro.hu";
 constexpr auto kAfterClickDelay = std::chrono::seconds(2);
+constexpr app::WindowSize kWindowSize{1024, 768};
 // Label of the "reject all" button of the tippmixpro.hu cookie banner.
 constexpr auto kCookieRejectLabel = "ÖSSZES ELUTASÍTÁSA";
 
@@ -83,7 +84,7 @@ int main(int argc, char* argv[])
     std::cout << "session: " << app::toString(app::detectSession()) << '\n';
 
     app::Browser browser;
-    if (auto r = browser.open(url); !r) {
+    if (auto r = browser.open(url, kWindowSize); !r) {
         return fail("cannot launch chromium: " + r.error());
     }
     std::cout << "chromium launched: " << url << '\n';
@@ -93,6 +94,11 @@ int main(int argc, char* argv[])
         return fail(windowId.error());
     }
     std::cout << "window id: " << *windowId << '\n';
+
+    if (auto r = app::ensureWindowSize(*windowId, kWindowSize); !r) {
+        return fail("cannot set window size: " + r.error());
+    }
+    std::cout << "window size: " << app::toString(kWindowSize) << '\n';
 
     // Give the page time to load and render.
     std::this_thread::sleep_for(kPageLoadDelay);

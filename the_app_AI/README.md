@@ -3,20 +3,16 @@
 Minimal C++23 standalone app that drives a browser via external X11 tools
 (see `../description.md`).
 
-## Use case 1
+## Usage
 
 `the_app_AI [url] [output.png]`
 
-`url` defaults to `https://www.tippmixpro.hu` when omitted.
+`url` defaults to `https://www.tippmixpro.hu`, `output.png` to `./screenshot.png`.
 
-1. Launches chromium on `url` (app mode: window shows only the page content).
-2. Finds the window with `xdotool`, activates it.
-3. Captures it with ImageMagick `import` (default: `./screenshot.png`).
-4. Reads the screenshot with `tesseract` (Hungarian). If the cookie banner's
-   "ÖSSZES ELUTASÍTÁSA" (reject all) button is found, clicks its center with
-   `xdotool`, re-captures the window and checks with OCR that the banner is gone.
-   OCR failures are only warnings; the original screenshot is kept.
-5. Opens the screenshot in `gimp`.
+What the app does is described by the use cases in
+[`docs/use_cases.md`](docs/use_cases.md) (UseCase_1: open page, screenshot,
+GIMP; UseCase_2: reject the cookie banner; UseCase_3: open the window at
+1024x768).
 
 ### How the screenshot is "read"
 
