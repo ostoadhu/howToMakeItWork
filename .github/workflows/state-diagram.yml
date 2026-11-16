@@ -1,0 +1,25 @@
+name: State machine diagram
+
+on:
+  push:
+    paths:
+      - "the_app_AI/docs/**"
+      - "the_app_AI/tools/gen_state_diagram.py"
+      - ".github/workflows/state-diagram.yml"
+  pull_request:
+    paths:
+      - "the_app_AI/docs/**"
+      - "the_app_AI/tools/gen_state_diagram.py"
+      - ".github/workflows/state-diagram.yml"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - run: pip install pyyaml
+      - name: Diagram in use_cases.md is up to date
+        run: python the_app_AI/tools/gen_state_diagram.py --check

@@ -1,0 +1,49 @@
+# Single source of the_app_AI state machine.
+#
+# After editing this file (or a use case in use_cases.md) regenerate the
+# diagram with:   python the_app_AI/tools/gen_state_diagram.py
+# The pre-commit hook and the CI check do this / verify it automatically.
+#
+# states:
+#   <Name>:
+#     use_cases:   [UseCase_N, ...]   use cases from use_cases.md this state covers
+#     description: short text shown in the diagram
+#     kind:        normal (default) | choice | error
+#     defined:     false if the state has no use case/implementation yet
+# transitions: list of {from, to, event}; "[*]" is the start/end pseudo-state.
+
+initial: OpenWindow
+
+states:
+  OpenWindow:
+    use_cases: [UseCase_1, UseCase_3]
+    description: launch Chromium at 1024x768, find the window
+  WaitPageLoad:
+    use_cases: [UseCase_1]
+    description: wait for the page, capture the window
+  BannerVisible:
+    kind: choice
+  RejectCookies:
+    use_cases: [UseCase_2]
+    description: click ÖSSZES ELUTASÍTÁSA, verify banner is gone
+  TakeBet:
+    description: SelectButtonA / take a bet
+    defined: false
+  CloseWindow:
+    use_cases: [UseCase_4]
+    description: close Chromium, remove temporary profile
+  Error:
+    kind: error
+    description: no handling defined yet, the app exits
+
+transitions:
+  - {from: OpenWindow, to: WaitPageLoad, event: "window found, size 1024x768"}
+  - {from: OpenWindow, to: Error, event: "launch fails / no window / size wrong"}
+  - {from: WaitPageLoad, to: BannerVisible, event: "page loaded, screenshot taken"}
+  - {from: BannerVisible, to: RejectCookies, event: "banner visible"}
+  - {from: BannerVisible, to: TakeBet, event: "no banner"}
+  - {from: RejectCookies, to: TakeBet, event: "banner gone"}
+  - {from: RejectCookies, to: Error, event: "still visible after retries / OCR fails"}
+  - {from: TakeBet, to: CloseWindow, event: "bet taken"}
+  - {from: CloseWindow, to: OpenWindow, event: "window closed, profile removed"}
+  - {from: Error, to: "[*]", event: "exit"}

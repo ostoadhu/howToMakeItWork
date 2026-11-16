@@ -15,6 +15,79 @@ live in `../../description.md`.
 > last state always closes the window (UseCase_4) before returning to the
 > first state. Reloading the page = closing and reopening the browser.
 
+## State machine
+
+The diagram below is **generated**; do not edit it by hand. States and
+transitions are defined in [`state_machine.yaml`](state_machine.yaml).
+Whenever a use case/state is added or modified:
+
+1. update `state_machine.yaml` (every `UseCase_N` must be covered by a state),
+2. run `python the_app_AI/tools/gen_state_diagram.py` (needs PyYAML).
+
+The git pre-commit hook regenerates it automatically, and the CI check
+(`.github/workflows/state-diagram.yml`) fails if it is out of date.
+GitHub renders the Mermaid block as a picture.
+
+<!-- BEGIN GENERATED STATE MACHINE -->
+<!-- Generated from docs/state_machine.yaml by tools/gen_state_diagram.py. Do not edit by hand. -->
+
+```mermaid
+stateDiagram-v2
+    [*] --> OpenWindow
+    state "OpenWindow (UseCase_1, UseCase_3)" as OpenWindow
+    OpenWindow : launch Chromium at 1024x768, find the window
+    state "WaitPageLoad (UseCase_1)" as WaitPageLoad
+    WaitPageLoad : wait for the page, capture the window
+    state BannerVisible <<choice>>
+    state "RejectCookies (UseCase_2)" as RejectCookies
+    RejectCookies : click ÖSSZES ELUTASÍTÁSA, verify banner is gone
+    state "TakeBet" as TakeBet
+    TakeBet : SelectButtonA / take a bet
+    state "CloseWindow (UseCase_4)" as CloseWindow
+    CloseWindow : close Chromium, remove temporary profile
+    state "Error" as Error
+    Error : no handling defined yet, the app exits
+    OpenWindow --> WaitPageLoad : window found, size 1024x768
+    OpenWindow --> Error : launch fails / no window / size wrong
+    WaitPageLoad --> BannerVisible : page loaded, screenshot taken
+    BannerVisible --> RejectCookies : banner visible
+    BannerVisible --> TakeBet : no banner
+    RejectCookies --> TakeBet : banner gone
+    RejectCookies --> Error : still visible after retries / OCR fails
+    TakeBet --> CloseWindow : bet taken
+    CloseWindow --> OpenWindow : window closed, profile removed
+    Error --> [*] : exit
+    classDef undefined stroke-dasharray: 5 5
+    class TakeBet undefined
+    classDef error stroke:#c00,color:#c00
+    class Error error
+```
+
+| State | Use cases | Description |
+|---|---|---|
+| OpenWindow | UseCase_1, UseCase_3 | launch Chromium at 1024x768, find the window |
+| WaitPageLoad | UseCase_1 | wait for the page, capture the window |
+| BannerVisible | – | decision |
+| RejectCookies | UseCase_2 | click ÖSSZES ELUTASÍTÁSA, verify banner is gone |
+| TakeBet | – | SelectButtonA / take a bet *(not defined yet)* |
+| CloseWindow | UseCase_4 | close Chromium, remove temporary profile |
+| Error | – | no handling defined yet, the app exits |
+
+| From | Event / guard | To |
+|---|---|---|
+| OpenWindow | window found, size 1024x768 | WaitPageLoad |
+| OpenWindow | launch fails / no window / size wrong | Error |
+| WaitPageLoad | page loaded, screenshot taken | BannerVisible |
+| BannerVisible | banner visible | RejectCookies |
+| BannerVisible | no banner | TakeBet |
+| RejectCookies | banner gone | TakeBet |
+| RejectCookies | still visible after retries / OCR fails | Error |
+| TakeBet | bet taken | CloseWindow |
+| CloseWindow | window closed, profile removed | OpenWindow |
+| Error | exit | [*] |
+
+<!-- END GENERATED STATE MACHINE -->
+
 ## Entry template
 
 ```
@@ -25,7 +98,7 @@ live in `../../description.md`.
 **Steps / expected behaviour:** <numbered list>
 **Success:** <end condition>
 **Failure / edge cases:** <timeouts, missing elements, popups, ...>
-**State machine:** <diagram + states/events/guards/actions table, or link to it>
+**State machine:** <state(s) covering it in state_machine.yaml; see "State machine" above>
 **Notes / open questions:**
 ```
 

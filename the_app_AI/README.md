@@ -66,13 +66,36 @@ ctest --test-dir build --output-on-failure
 
 Disable them with `-DBUILD_TESTING=OFF`.
 
+## State machine diagram
+
+States and transitions live in `docs/state_machine.yaml`; the Mermaid diagram
+in `docs/use_cases.md` is generated from it (GitHub renders it as a picture).
+After changing a use case/state, update the YAML and regenerate:
+
+```sh
+sudo apt install python3-yaml        # or: pip install pyyaml
+python3 tools/gen_state_diagram.py   # --check only verifies
+```
+
+Enable the pre-commit hook once per clone (run in the repo root); it
+regenerates the diagram on every commit touching these files:
+
+```sh
+git config core.hooksPath .githooks
+```
+
+The CI workflow `.github/workflows/state-diagram.yml` fails if the committed
+diagram is out of date.
+
 ## Layout
 
 ```
 CMakeLists.txt
+docs/      use_cases.md  state_machine.yaml
 include/   process.hpp  browser.hpp  screenshot.hpp  session.hpp  ocr.hpp  input.hpp
 src/       main.cpp  process.cpp  browser.cpp  screenshot.cpp  session.cpp  ocr.cpp  input.cpp
 tests/     CMakeLists.txt  test_*.cpp
+tools/     gen_state_diagram.py
 ```
 
 `process` runs external tools without a shell (no URL injection);
