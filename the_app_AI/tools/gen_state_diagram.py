@@ -94,20 +94,15 @@ def render(spec: dict) -> str:
         label = name
         if s["use_cases"]:
             label += " (" + ", ".join(s["use_cases"]) + ")"
+        if not s["defined"]:
+            label += " - not defined yet"
         lines.append(f"    state \"{mermaid_text(label)}\" as {name}")
         if s["description"]:
             lines.append(f"    {name} : {mermaid_text(s['description'])}")
     for t in transitions:
         event = f" : {mermaid_text(t['event'])}" if t["event"] else ""
         lines.append(f"    {t['from']} --> {t['to']}{event}")
-    undefined = [n for n, s in states.items() if not s["defined"]]
-    errors = [n for n, s in states.items() if s["kind"] == "error"]
-    if undefined:
-        lines.append("    classDef undefined stroke-dasharray: 5 5")
-        lines.append(f"    class {','.join(undefined)} undefined")
-    if errors:
-        lines.append("    classDef error stroke:#c00,color:#c00")
-        lines.append(f"    class {','.join(errors)} error")
+    # No classDef/class styling: older Mermaid versions (e.g. 8.x/9.1) cannot render it.
     lines.append("```")
 
     lines += ["", "| State | Use cases | Description |", "|---|---|---|"]

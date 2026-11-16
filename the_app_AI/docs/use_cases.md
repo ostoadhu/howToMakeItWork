@@ -41,7 +41,7 @@ stateDiagram-v2
     state BannerVisible <<choice>>
     state "RejectCookies (UseCase_2)" as RejectCookies
     RejectCookies : click ÖSSZES ELUTASÍTÁSA, verify banner is gone
-    state "TakeBet" as TakeBet
+    state "TakeBet - not defined yet" as TakeBet
     TakeBet : SelectButtonA / take a bet
     state "CloseWindow (UseCase_4)" as CloseWindow
     CloseWindow : close Chromium, remove temporary profile
@@ -57,10 +57,6 @@ stateDiagram-v2
     TakeBet --> CloseWindow : bet taken
     CloseWindow --> OpenWindow : window closed, profile removed
     Error --> [*] : exit
-    classDef undefined stroke-dasharray: 5 5
-    class TakeBet undefined
-    classDef error stroke:#c00,color:#c00
-    class Error error
 ```
 
 | State | Use cases | Description |
