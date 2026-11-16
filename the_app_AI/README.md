@@ -12,7 +12,7 @@ Minimal C++23 standalone app that drives a browser via external X11 tools
 What the app does is described by the use cases in
 [`docs/use_cases.md`](docs/use_cases.md) (UseCase_1: open page, screenshot,
 GIMP; UseCase_2: reject the cookie banner; UseCase_3: open the window at
-1024x768).
+1024x768; UseCase_4: close the browser window).
 
 ### How the screenshot is "read"
 

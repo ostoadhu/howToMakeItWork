@@ -4,6 +4,17 @@ Use cases for `the_app_AI`, each with the state machine designed to meet it.
 This file is the single source of truth for use cases; general requirements
 live in `../../description.md`.
 
+> **Note (future architecture):** the app will move to a state model
+> architecture in which each use case becomes a state. Keep each use case
+> self-contained, with clear entry conditions (preconditions), an exit
+> condition (success) and failure outcomes, so it can later map directly
+> to a state and its transitions.
+>
+> Planned cycle: the first state opens the browser window (UseCase_1,
+> UseCase_3), the following states do the work (e.g. take a bet), and the
+> last state always closes the window (UseCase_4) before returning to the
+> first state. Reloading the page = closing and reopening the browser.
+
 ## Entry template
 
 ```
@@ -62,3 +73,18 @@ A first version is already in the code (see "How the screenshot is read" in `../
 **State machine:** not designed yet.
 **Notes / open questions:** The size is the outer Chromium window, meaning the X11 window that xdotool reports and ImageMagick `import` captures. Window-manager decorations around it are not counted. The size is defined by `kWindowSize` in `src/main.cpp`.
 Test: `tests/test_window_size.cpp` (`BrowserWindow.OpensAt1024x768AccordingToXdotool`) launches Chromium and checks WIDTH/HEIGHT from `xdotool getwindowgeometry --shell`. It is skipped without an X11 session, chromium or xdotool.
+
+## UseCase_4: Close the browser window
+**Status:** captured
+**Description:** Reloading the page is done by restarting the browser: after every bet taken, the browser window is closed and then reopened, starting again from the beginning. This use case closes the browser window. In the state model it is always the last state of a cycle, right before returning to the first state, where the window is opened (UseCase_1 / UseCase_3).
+**Preconditions:** The browser was launched by the app (its pid and window id are known). The work of the cycle is done (e.g. a bet was taken).
+**Steps / expected behaviour:**
+1. Close the Chromium window gracefully (e.g. `xdotool windowclose` or SIGTERM to the Chromium process group).
+2. Wait until the window is gone (`xdotool search --pid` finds nothing) and the process has exited.
+3. If it is still running after a timeout, kill it (SIGKILL).
+4. Remove the temporary Chromium profile (`/tmp/the_app_AI_profile_<pid>`).
+5. Hand over to the first state: open the window again.
+**Success:** No window or process of the launched Chromium remains, the temporary profile is removed, and the next cycle can start from a clean state.
+**Failure / edge cases:** The window does not close (hung page, dialog such as "Leave site?"). The process does not exit even after SIGKILL. The window was already closed (e.g. crashed): treat as success.
+**State machine:** not designed yet. Cycle: `OpenWindow → ... → TakeBet → CloseWindow → OpenWindow`.
+**Notes / open questions:** The "take a bet" use case does not exist yet. Should failures in other states also go through CloseWindow before restarting? Should the cycle repeat forever, or stop after a number of bets? Today the app leaves Chromium running when it exits.
