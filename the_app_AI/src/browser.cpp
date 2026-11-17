@@ -91,22 +91,32 @@ std::expected<void, std::string> ensureWindowSize(const std::string& windowId, W
     return std::unexpected("window is " + toString(*current) + " instead of " + toString(size));
 }
 
+std::vector<std::string> chromiumCommand(const std::string& url, WindowSize size,
+                                         const std::string& profileDir)
+{
+    return {
+        "chromium",
+        "--user-data-dir=" + profileDir,
+        "--incognito",
+        "--ozone-platform=x11", // never use native Wayland: xdotool must see the window
+        "--no-first-run",
+        "--no-default-browser-check",
+        "--window-position=0,0",
+        "--window-size=" + std::to_string(size.width) + ',' + std::to_string(size.height),
+        // Not --app=<url>: app windows may ignore --incognito. "--" ends the switches,
+        // so a url argument starting with '-' cannot inject one.
+        "--",
+        url,
+    };
+}
+
 std::expected<void, std::string> Browser::open(const std::string& url, WindowSize size)
 {
     // A dedicated profile forces a new chromium instance, so the window
     // belongs to the pid we launched (instead of an already running chromium).
     const std::string profile = "/tmp/the_app_AI_profile_" + std::to_string(getpid());
 
-    auto pid = spawnDetached({
-        "chromium",
-        "--user-data-dir=" + profile,
-        "--ozone-platform=x11", // never use native Wayland: xdotool must see the window
-        "--no-first-run",
-        "--no-default-browser-check",
-        "--window-position=0,0",
-        "--window-size=" + std::to_string(size.width) + ',' + std::to_string(size.height),
-        "--app=" + url,
-    });
+    auto pid = spawnDetached(chromiumCommand(url, size, profile));
     if (!pid) {
         return std::unexpected(pid.error());
     }

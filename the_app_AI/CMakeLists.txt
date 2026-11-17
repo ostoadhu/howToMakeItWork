@@ -19,6 +19,10 @@ add_library(the_app_AI_core STATIC
     src/session.cpp
     src/ocr.cpp
     src/input.cpp
+    src/log.cpp
+    src/image.cpp
+    src/credentials.cpp
+    src/region_config.cpp
 )
 target_include_directories(the_app_AI_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_compile_options(the_app_AI_core PRIVATE -Wall -Wextra -Wpedantic)

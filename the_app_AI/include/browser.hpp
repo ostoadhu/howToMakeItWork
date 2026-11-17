@@ -5,6 +5,7 @@
 #include <optional>
 #include <string>
 #include <sys/types.h>
+#include <vector>
 
 namespace app {
 
@@ -27,8 +28,12 @@ std::expected<WindowSize, std::string> windowSize(const std::string& windowId);
 std::expected<void, std::string> ensureWindowSize(const std::string& windowId, WindowSize size,
                                                   int attempts = 3);
 
-// Launches chromium in "app" mode (no tabs/address bar), so the window
-// contains only the web page content.
+// Command line used to launch chromium: a private window (--incognito, so no cookies,
+// history or cache are kept) in a dedicated profile directory, at `size`, showing `url`.
+std::vector<std::string> chromiumCommand(const std::string& url, WindowSize size,
+                                         const std::string& profileDir);
+
+// Launches chromium in an incognito window (see chromiumCommand).
 class Browser {
 public:
     std::expected<void, std::string> open(const std::string& url, WindowSize size);

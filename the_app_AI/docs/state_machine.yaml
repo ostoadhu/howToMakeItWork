@@ -10,14 +10,17 @@
 #     description: short text shown in the diagram
 #     kind:        normal (default) | choice | error
 #     defined:     false if the state has no use case/implementation yet
-# transitions: list of {from, to, event}; "[*]" is the start/end pseudo-state.
+#     parent:      name of the composite state this state is inside (optional)
+#     initial:     for a composite state: its first sub-state
+# transitions: list of {from, to, event}; "[*]" is the end pseudo-state.
+#   Both ends must be in the same composite state (or both top-level).
 
 initial: OpenWindow
 
 states:
   OpenWindow:
-    use_cases: [UseCase_1, UseCase_3]
-    description: launch Chromium at 1024x768, find the window
+    use_cases: [UseCase_1, UseCase_3, UseCase_9]
+    description: launch Chromium incognito at 1024x768, find the window
   WaitPageLoad:
     use_cases: [UseCase_1]
     description: wait for the page, capture the window
@@ -26,8 +29,24 @@ states:
   RejectCookies:
     use_cases: [UseCase_2]
     description: click ÖSSZES ELUTASÍTÁSA, verify banner is gone
+  Login:
+    use_cases: [UseCase_5]
+    description: find Bejelentkezés in the upper right corner, log it, click it
+  EnterCredentials:
+    use_cases: [UseCase_7]
+    description: type e-mail and password, validate them, press Enter, wait for the popup to close
   TakeBet:
-    description: SelectButtonA / take a bet
+    description: take a bet, in several steps
+    defined: false
+    initial: ReadGameList
+  ReadGameList:
+    parent: TakeBet
+    use_cases: [UseCase_8]
+    description: OCR the game names listed in GAME_LIST_REGION (region_config.txt)
+  SelectGameType:
+    parent: TakeBet
+    use_cases: [UseCase_6]
+    description: select the proper game type
     defined: false
   CloseWindow:
     use_cases: [UseCase_4]
@@ -41,9 +60,15 @@ transitions:
   - {from: OpenWindow, to: Error, event: "launch fails / no window / size wrong"}
   - {from: WaitPageLoad, to: BannerVisible, event: "page loaded, screenshot taken"}
   - {from: BannerVisible, to: RejectCookies, event: "banner visible"}
-  - {from: BannerVisible, to: TakeBet, event: "no banner"}
-  - {from: RejectCookies, to: TakeBet, event: "banner gone"}
+  - {from: BannerVisible, to: Login, event: "no banner"}
+  - {from: RejectCookies, to: Login, event: "banner gone"}
   - {from: RejectCookies, to: Error, event: "still visible after retries / OCR fails"}
+  - {from: Login, to: EnterCredentials, event: "login button clicked"}
+  - {from: Login, to: Error, event: "login button not found / OCR fails"}
+  - {from: EnterCredentials, to: TakeBet, event: "popup disappeared, logged in"}
+  - {from: EnterCredentials, to: Error, event: "field not found / validation fails / popup stays / no credentials"}
   - {from: TakeBet, to: CloseWindow, event: "bet taken"}
+  - {from: TakeBet, to: Error, event: "a step fails (e.g. no game found in the region)"}
+  - {from: ReadGameList, to: SelectGameType, event: "list of games read"}
   - {from: CloseWindow, to: OpenWindow, event: "window closed, profile removed"}
   - {from: Error, to: "[*]", event: "exit"}

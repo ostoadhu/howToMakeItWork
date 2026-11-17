@@ -219,14 +219,46 @@ std::optional<Box> findPhrase(const std::vector<OcrWord>& words, std::string_vie
     return std::nullopt;
 }
 
-std::expected<std::vector<OcrWord>, std::string> recognize(const std::filesystem::path& image,
-                                                           const std::string& language)
+std::vector<OcrWord> wordsInRegion(const std::vector<OcrWord>& words, const Box& region)
+{
+    std::vector<OcrWord> inside;
+    for (const auto& w : words) {
+        if (w.box.left >= region.left && w.box.top >= region.top
+            && w.box.left + w.box.width <= region.left + region.width
+            && w.box.top + w.box.height <= region.top + region.height) {
+            inside.push_back(w);
+        }
+    }
+    return inside;
+}
+
+Box upperRightCorner(int width, int height)
+{
+    const int left = width / 2;
+    return {left, 0, width - left, height / 5};
+}
+
+bool fuzzyMatches(std::string_view ocrText, std::string_view expected)
+{
+    return fuzzyEquals(std::string(ocrText), normalizeWord(expected));
+}
+
+namespace {
+
+// Converts `image` (extra ImageMagick options such as a crop are applied first), enlarges it and OCRs it.
+// Coordinates are of the converted image, divided by the enlargement.
+std::expected<std::vector<OcrWord>, std::string> recognizeImpl(const std::filesystem::path& image,
+                                                               const std::vector<std::string>& preOptions,
+                                                               const std::string& language)
 {
     const auto prepared = std::filesystem::temp_directory_path()
         / ("the_app_AI_ocr_" + std::to_string(getpid()) + ".png");
 
-    auto conv = run({"convert", image.string(), "-colorspace", "Gray", "-resize",
-                     std::to_string(kOcrScale * 100) + "%", prepared.string()});
+    std::vector<std::string> convert{"convert", image.string()};
+    convert.insert(convert.end(), preOptions.begin(), preOptions.end());
+    convert.insert(convert.end(), {"-colorspace", "Gray", "-resize", std::to_string(kOcrScale * 100) + "%",
+                                   prepared.string()});
+    auto conv = run(convert);
     if (!conv) {
         return std::unexpected(conv.error());
     }
@@ -246,6 +278,80 @@ std::expected<std::vector<OcrWord>, std::string> recognize(const std::filesystem
                                + " (is tesseract-ocr-" + language + " installed?)");
     }
     return parseTesseractTsv(ocr->output, kOcrScale);
+}
+
+} // namespace
+
+std::expected<std::vector<OcrWord>, std::string> recognize(const std::filesystem::path& image,
+                                                           const std::string& language)
+{
+    return recognizeImpl(image, {}, language);
+}
+
+std::expected<std::vector<OcrWord>, std::string> recognizeRegion(const std::filesystem::path& image,
+                                                                 const Box& region,
+                                                                 const std::string& language)
+{
+    if (region.width <= 0 || region.height <= 0) {
+        return std::unexpected("empty OCR region");
+    }
+    const std::string geometry = std::to_string(region.width) + 'x' + std::to_string(region.height)
+        + '+' + std::to_string(region.left) + '+' + std::to_string(region.top);
+    auto words = recognizeImpl(image, {"-crop", geometry, "+repage"}, language);
+    if (!words) {
+        return words;
+    }
+    for (auto& w : *words) {
+        w.box.left += region.left;
+        w.box.top += region.top;
+    }
+    return words;
+}
+
+std::vector<ListItem> groupListItems(std::vector<OcrWord> words, double maxGapFactor)
+{
+    std::erase_if(words, [](const OcrWord& w) { return normalizeWord(w.text).empty(); });
+    std::sort(words.begin(), words.end(), [](const OcrWord& a, const OcrWord& b) {
+        return a.box.centerY() < b.box.centerY();
+    });
+
+    // Rows: a word joins the current row if it overlaps it vertically by more than half.
+    std::vector<std::vector<OcrWord>> rows;
+    Box rowBox;
+    for (const auto& w : words) {
+        if (!rows.empty()) {
+            const int overlap = std::min(rowBox.top + rowBox.height, w.box.top + w.box.height)
+                - std::max(rowBox.top, w.box.top);
+            if (overlap * 2 > std::min(rowBox.height, w.box.height)) {
+                rows.back().push_back(w);
+                rowBox = unite(rowBox, w.box);
+                continue;
+            }
+        }
+        rows.push_back({w});
+        rowBox = w.box;
+    }
+
+    std::vector<ListItem> items;
+    for (auto& row : rows) {
+        std::sort(row.begin(), row.end(),
+                  [](const OcrWord& a, const OcrWord& b) { return a.box.left < b.box.left; });
+        for (std::size_t i = 0; i < row.size(); ++i) {
+            const auto& w = row[i];
+            if (i > 0) {
+                auto& last = items.back();
+                const int gap = w.box.left - (last.box.left + last.box.width);
+                const int height = std::max(w.box.height, row[i - 1].box.height);
+                if (gap <= static_cast<int>(maxGapFactor * height)) {
+                    last.text += ' ' + w.text;
+                    last.box = unite(last.box, w.box);
+                    continue;
+                }
+            }
+            items.push_back({w.text, w.box});
+        }
+    }
+    return items;
 }
 
 } // namespace app

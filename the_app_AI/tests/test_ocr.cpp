@@ -85,3 +85,105 @@ TEST(Ocr, FindPhraseReturnsNulloptWhenAbsent)
     EXPECT_FALSE(app::findPhrase(words, "Bejelentkezés").has_value());
     EXPECT_FALSE(app::findPhrase(words, "").has_value());
 }
+
+TEST(Ocr, UpperRightCornerIsRightHalfAndTopFifth)
+{
+    const auto corner = app::upperRightCorner(1024, 768);
+    EXPECT_EQ(corner.left, 512);
+    EXPECT_EQ(corner.top, 0);
+    EXPECT_EQ(corner.width, 512);
+    EXPECT_EQ(corner.height, 153);
+}
+
+TEST(Ocr, WordsInRegionKeepsOnlyWordsCompletelyInside)
+{
+    const std::vector<app::OcrWord> words{
+        {"inside", {900, 20, 80, 16}, 90.0f},
+        {"left", {100, 20, 80, 16}, 90.0f},
+        {"below", {900, 400, 80, 16}, 90.0f},
+        {"crossing", {500, 20, 80, 16}, 90.0f},
+    };
+    const auto inside = app::wordsInRegion(words, app::upperRightCorner(1024, 768));
+    ASSERT_EQ(inside.size(), 1u);
+    EXPECT_EQ(inside[0].text, "inside");
+}
+
+TEST(Ocr, LoginButtonIsFoundOnlyInUpperRightCorner)
+{
+    const auto corner = app::upperRightCorner(1024, 768);
+    const std::vector<app::OcrWord> words{
+        {"Bejelentkezés", {40, 600, 110, 16}, 90.0f},   // e.g. a footer link
+        {"Regisztráció", {800, 24, 90, 16}, 90.0f},
+        {"Bejelentkezes", {910, 24, 100, 16}, 85.0f},   // OCR lost the accent
+    };
+    const auto button = app::findPhrase(app::wordsInRegion(words, corner), "Bejelentkezés");
+    ASSERT_TRUE(button.has_value());
+    EXPECT_EQ(button->left, 910);
+    EXPECT_EQ(button->centerX(), 960);
+    EXPECT_EQ(button->centerY(), 32);
+}
+
+TEST(Ocr, LoginButtonOutsideCornerIsNotFound)
+{
+    const std::vector<app::OcrWord> words{{"Bejelentkezés", {40, 600, 110, 16}, 90.0f}};
+    EXPECT_TRUE(app::findPhrase(words, "Bejelentkezés").has_value());
+    EXPECT_FALSE(app::findPhrase(app::wordsInRegion(words, app::upperRightCorner(1024, 768)),
+                                 "Bejelentkezés")
+                     .has_value());
+}
+
+TEST(Ocr, FuzzyMatchesTypedEmailAddress)
+{
+    EXPECT_TRUE(app::fuzzyMatches("ostorhazyadam@gmail.com", "ostorhazyadam@gmail.com"));
+    // OCR noise: '@' read as '', 'l' as '1'.
+    EXPECT_TRUE(app::fuzzyMatches("ostorhazyadam©gmai1.com", "ostorhazyadam@gmail.com"));
+    EXPECT_FALSE(app::fuzzyMatches("", "ostorhazyadam@gmail.com"));
+    EXPECT_FALSE(app::fuzzyMatches("someone@example.com", "ostorhazyadam@gmail.com"));
+    EXPECT_FALSE(app::fuzzyMatches("ostorhazy", "ostorhazyadam@gmail.com"));
+}
+
+namespace {
+app::OcrWord word(std::string text, int left, int top, int width, int height = 16)
+{
+    return {std::move(text), {left, top, width, height}, 90.0f};
+}
+} // namespace
+
+TEST(Ocr, GroupsHorizontalListIntoItems)
+{
+    // "Sport   Élő fogadás   Kaszinó" - words of an item 5 px apart, items 40 px apart.
+    const std::vector<app::OcrWord> words{
+        word("Kaszinó", 230, 20, 70),
+        word("Sport", 10, 21, 50),
+        word("Élő", 100, 20, 30),
+        word("fogadás", 135, 19, 55),
+    };
+    const auto items = app::groupListItems(words);
+    ASSERT_EQ(items.size(), 3u);
+    EXPECT_EQ(items[0].text, "Sport");
+    EXPECT_EQ(items[1].text, "Élő fogadás");
+    EXPECT_EQ(items[1].box.left, 100);
+    EXPECT_EQ(items[1].box.width, 90);
+    EXPECT_EQ(items[2].text, "Kaszinó");
+}
+
+TEST(Ocr, GroupListItemsSplitsRowsAndDropsIconNoise)
+{
+    const std::vector<app::OcrWord> words{
+        word("Foci", 10, 60, 40),
+        word("|", 70, 20, 4),
+        word("Lottó", 10, 20, 45),
+        word("", 90, 60, 6),
+        word("Tenisz", 100, 61, 55),
+    };
+    const auto items = app::groupListItems(words);
+    ASSERT_EQ(items.size(), 3u);
+    EXPECT_EQ(items[0].text, "Lottó");
+    EXPECT_EQ(items[1].text, "Foci");
+    EXPECT_EQ(items[2].text, "Tenisz");
+}
+
+TEST(Ocr, GroupListItemsOfNothingIsEmpty)
+{
+    EXPECT_TRUE(app::groupListItems({}).empty());
+}

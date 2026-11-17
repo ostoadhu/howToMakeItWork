@@ -57,10 +57,38 @@ def load_spec(path: Path) -> dict:
         state.setdefault("use_cases", [])
         state.setdefault("description", "")
         state.setdefault("defined", True)
+        state.setdefault("parent", None)
+        state.setdefault("initial", None)
+    for name, state in states.items():
+        parent = state["parent"]
+        if parent is not None and parent not in states:
+            raise SpecError(f"state '{name}': unknown parent '{parent}'")
+        seen = {name}
+        while parent is not None:
+            if parent in seen:
+                raise SpecError(f"state '{name}': parent cycle")
+            seen.add(parent)
+            parent = states[parent]["parent"]
+    for name, state in states.items():
+        children = [n for n, s in states.items() if s["parent"] == name]
+        if children and state["kind"] != "normal":
+            raise SpecError(f"state '{name}': only normal states can contain sub-states")
+        if children and state["initial"] not in children:
+            raise SpecError(f"composite state '{name}': 'initial' must be one of {children}")
+        if not children and state["initial"] is not None:
+            raise SpecError(f"state '{name}': 'initial' set but it has no sub-states")
+    if states[initial]["parent"] is not None:
+        raise SpecError(f"initial state '{initial}' must be a top-level state")
     for i, t in enumerate(transitions, 1):
         for key in ("from", "to"):
             if t.get(key) != PSEUDO and t.get(key) not in states:
                 raise SpecError(f"transition {i}: unknown state '{t.get(key)}' in '{key}'")
+        if t["from"] == PSEUDO:
+            raise SpecError(f"transition {i}: '[*]' can only be a target")
+        to_parent = states[t["to"]]["parent"] if t["to"] != PSEUDO else states[t["from"]]["parent"]
+        if states[t["from"]]["parent"] != to_parent:
+            raise SpecError(f"transition {i}: '{t['from']}' and '{t['to']}' are not in the same "
+                            "composite state; connect the composite states instead")
         t.setdefault("event", "")
     return {"initial": initial, "states": states, "transitions": transitions}
 
@@ -83,35 +111,72 @@ def mermaid_text(text: str) -> str:
     return re.sub(r"\s+", " ", str(text)).replace(":", " -").replace(";", ",").strip()
 
 
+def state_label(name: str, s: dict) -> str:
+    label = name
+    if s["use_cases"]:
+        label += " (" + ", ".join(s["use_cases"]) + ")"
+    if not s["defined"]:
+        label += " - not defined yet"
+    return label
+
+
+def render_scope(spec: dict, parent: str | None, indent: str) -> list[str]:
+    """Renders the states and transitions directly inside `parent` (None = top level)."""
+    states, transitions = spec["states"], spec["transitions"]
+    lines = []
+    initial = spec["initial"] if parent is None else states[parent]["initial"]
+    lines.append(f"{indent}[*] --> {initial}")
+    for name, s in states.items():
+        if s["parent"] != parent:
+            continue
+        if s["kind"] == "choice":
+            lines.append(f"{indent}state {name} <<choice>>")
+            continue
+        if any(c["parent"] == name for c in states.values()):
+            # Composite: old Mermaid versions cannot combine `state "label" as X`
+            # with a `{ }` body, so the label/description go into a note.
+            lines.append(f"{indent}state {name} {{")
+            lines += render_scope(spec, name, indent + "    ")
+            lines.append(f"{indent}}}")
+            note = mermaid_text(state_label(name, s) + (f" - {s['description']}" if s["description"] else ""))
+            lines.append(f"{indent}note right of {name} : {note}")
+            continue
+        lines.append(f"{indent}state \"{mermaid_text(state_label(name, s))}\" as {name}")
+        if s["description"]:
+            lines.append(f"{indent}{name} : {mermaid_text(s['description'])}")
+    for t in transitions:
+        scope = states[t["from"]]["parent"]
+        if scope != parent:
+            continue
+        event = f" : {mermaid_text(t['event'])}" if t["event"] else ""
+        lines.append(f"{indent}{t['from']} --> {t['to']}{event}")
+    return lines
+
+
+def state_path(states: dict, name: str) -> str:
+    parts = [name]
+    while states[parts[-1]]["parent"] is not None:
+        parts.append(states[parts[-1]]["parent"])
+    return " / ".join(reversed(parts))
+
+
 def render(spec: dict) -> str:
     states, transitions = spec["states"], spec["transitions"]
 
-    lines = ["```mermaid", "stateDiagram-v2", f"    [*] --> {spec['initial']}"]
-    for name, s in states.items():
-        if s["kind"] == "choice":
-            lines.append(f"    state {name} <<choice>>")
-            continue
-        label = name
-        if s["use_cases"]:
-            label += " (" + ", ".join(s["use_cases"]) + ")"
-        if not s["defined"]:
-            label += " - not defined yet"
-        lines.append(f"    state \"{mermaid_text(label)}\" as {name}")
-        if s["description"]:
-            lines.append(f"    {name} : {mermaid_text(s['description'])}")
-    for t in transitions:
-        event = f" : {mermaid_text(t['event'])}" if t["event"] else ""
-        lines.append(f"    {t['from']} --> {t['to']}{event}")
+    lines = ["```mermaid", "stateDiagram-v2"]
+    lines += render_scope(spec, None, "    ")
     # No classDef/class styling: older Mermaid versions (e.g. 8.x/9.1) cannot render it.
     lines.append("```")
 
     lines += ["", "| State | Use cases | Description |", "|---|---|---|"]
     for name, s in states.items():
         desc = s["description"] or ("decision" if s["kind"] == "choice" else "")
+        if s["initial"]:
+            desc += f" (composite, starts in {s['initial']})"
         if not s["defined"]:
             desc += " *(not defined yet)*"
         ucs = ", ".join(s["use_cases"]) or "–"
-        lines.append(f"| {name} | {ucs} | {desc.strip()} |")
+        lines.append(f"| {state_path(states, name)} | {ucs} | {desc.strip()} |")
 
     lines += ["", "| From | Event / guard | To |", "|---|---|---|"]
     for t in transitions:

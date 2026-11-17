@@ -2,6 +2,8 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
+
 TEST(Browser, ParseWindowGeometry)
 {
     const auto size = app::parseWindowGeometry(
@@ -29,4 +31,21 @@ TEST(Browser, WaitForWindowFailsIfNotStarted)
     const auto res = browser.waitForWindow(std::chrono::seconds(1));
     ASSERT_FALSE(res.has_value());
     EXPECT_EQ(res.error(), "browser not started");
+}
+
+TEST(Browser, ChromiumOpensUrlInIncognitoWindowAtGivenSize)
+{
+    const auto cmd = app::chromiumCommand("https://www.tippmixpro.hu", {1024, 768}, "/tmp/profile_1");
+    ASSERT_FALSE(cmd.empty());
+    EXPECT_EQ(cmd.front(), "chromium");
+    auto has = [&](const std::string& arg) { return std::ranges::find(cmd, arg) != cmd.end(); };
+    EXPECT_TRUE(has("--incognito"));
+    EXPECT_TRUE(has("--window-size=1024,768"));
+    EXPECT_TRUE(has("--user-data-dir=/tmp/profile_1"));
+    EXPECT_TRUE(has("--ozone-platform=x11"));
+    EXPECT_TRUE(std::ranges::none_of(cmd, [](const std::string& a) { return a.starts_with("--app"); }));
+    // The url is last, after "--", so it can never be taken for a switch.
+    ASSERT_GE(cmd.size(), 2u);
+    EXPECT_EQ(cmd[cmd.size() - 2], "--");
+    EXPECT_EQ(cmd.back(), "https://www.tippmixpro.hu");
 }
