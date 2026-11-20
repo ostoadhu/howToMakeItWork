@@ -20,7 +20,7 @@ initial: OpenWindow
 states:
   OpenWindow:
     use_cases: [UseCase_1, UseCase_3, UseCase_9]
-    description: launch Chromium incognito at 1024x768, find the window
+    description: launch Chromium incognito at 1600x768, find the window
   WaitPageLoad:
     use_cases: [UseCase_1]
     description: wait for the page, capture the window
@@ -56,7 +56,7 @@ states:
     description: no handling defined yet, the app exits
 
 transitions:
-  - {from: OpenWindow, to: WaitPageLoad, event: "window found, size 1024x768"}
+  - {from: OpenWindow, to: WaitPageLoad, event: "window found, size 1600x768"}
   - {from: OpenWindow, to: Error, event: "launch fails / no window / size wrong"}
   - {from: WaitPageLoad, to: BannerVisible, event: "page loaded, screenshot taken"}
   - {from: BannerVisible, to: RejectCookies, event: "banner visible"}

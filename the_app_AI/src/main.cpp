@@ -26,7 +26,7 @@ constexpr auto kWindowTimeout = std::chrono::seconds(30);
 constexpr auto kPageLoadDelay = std::chrono::seconds(5);
 constexpr auto kDefaultUrl = "https://www.tippmixpro.hu";
 constexpr auto kAfterClickDelay = std::chrono::seconds(2);
-constexpr app::WindowSize kWindowSize{1024, 768};
+constexpr app::WindowSize kWindowSize{1600, 768};
 constexpr auto kLogFile = "the_app_AI.log";
 // Label of the "reject all" button of the tippmixpro.hu cookie banner.
 constexpr auto kCookieRejectLabel = "ÖSSZES ELUTASÍTÁSA";

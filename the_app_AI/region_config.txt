@@ -1,4 +1,4 @@
-# Screen regions, in pixels of the 1024x768 browser window.
+# Screen regions, in pixels of the 1600x768 browser window.
 # NAME = [left,top] [width,height]   ([left,top] is the upper left corner pixel)
 
 # Where the games are listed horizontally (UseCase_8, state TakeBet / ReadGameList).

@@ -1,4 +1,4 @@
-// Integration test for UseCase_3: the browser window must open at 1024x768.
+// Integration test for UseCase_3: the browser window must open at 1600x768.
 // It launches a real chromium and reads the window size with xdotool, so it
 // is skipped when no X11 session, chromium or xdotool is available.
 
@@ -18,7 +18,7 @@
 
 namespace {
 
-constexpr int kExpectedWidth = 1024;
+constexpr int kExpectedWidth = 1600;
 constexpr int kExpectedHeight = 768;
 
 bool toolAvailable(const std::string& tool)

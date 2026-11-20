@@ -12,7 +12,7 @@ Minimal C++23 standalone app that drives a browser via external X11 tools
 What the app does is described by the use cases in
 [`docs/use_cases.md`](docs/use_cases.md) (UseCase_1: open page, screenshot,
 GIMP; UseCase_2: reject the cookie banner; UseCase_3: open the window at
-1024x768; UseCase_4: close the browser window; UseCase_5: find and click the
+1600x768; UseCase_4: close the browser window; UseCase_5: find and click the
 "Bejelentkezés" login button; UseCase_6: select the game type; UseCase_7:
 enter and validate the login e-mail address and password; UseCase_8: read the
 list of games; UseCase_9: open the page in incognito mode).
@@ -20,7 +20,7 @@ list of games; UseCase_9: open the page in incognito mode).
 ### Screen regions
 
 Screen regions are configured in `region_config.txt` (working directory, or
-the file named by `THE_APP_AI_REGION_CONFIG`), in pixels of the 1024x768 window:
+the file named by `THE_APP_AI_REGION_CONFIG`), in pixels of the 1600x768 window:
 
 ```
 GAME_LIST_REGION = [0,0] [500,100]   # [left,top] [width,height]

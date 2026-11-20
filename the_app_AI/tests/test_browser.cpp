@@ -35,12 +35,12 @@ TEST(Browser, WaitForWindowFailsIfNotStarted)
 
 TEST(Browser, ChromiumOpensUrlInIncognitoWindowAtGivenSize)
 {
-    const auto cmd = app::chromiumCommand("https://www.tippmixpro.hu", {1024, 768}, "/tmp/profile_1");
+    const auto cmd = app::chromiumCommand("https://www.tippmixpro.hu", {1600, 768}, "/tmp/profile_1");
     ASSERT_FALSE(cmd.empty());
     EXPECT_EQ(cmd.front(), "chromium");
     auto has = [&](const std::string& arg) { return std::ranges::find(cmd, arg) != cmd.end(); };
     EXPECT_TRUE(has("--incognito"));
-    EXPECT_TRUE(has("--window-size=1024,768"));
+    EXPECT_TRUE(has("--window-size=1600,768"));
     EXPECT_TRUE(has("--user-data-dir=/tmp/profile_1"));
     EXPECT_TRUE(has("--ozone-platform=x11"));
     EXPECT_TRUE(std::ranges::none_of(cmd, [](const std::string& a) { return a.starts_with("--app"); }));

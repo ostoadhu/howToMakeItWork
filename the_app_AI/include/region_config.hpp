@@ -10,7 +10,7 @@
 
 namespace app {
 
-// Screen regions by name, in pixels of the 1024x768 browser window.
+// Screen regions by name, in pixels of the 1600x768 browser window.
 using RegionConfig = std::map<std::string, Box, std::less<>>;
 
 // Name of the region holding the horizontal list of games.

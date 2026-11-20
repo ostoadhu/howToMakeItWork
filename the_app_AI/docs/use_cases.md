@@ -35,7 +35,7 @@ GitHub renders the Mermaid block as a picture.
 stateDiagram-v2
     [*] --> OpenWindow
     state "OpenWindow (UseCase_1, UseCase_3, UseCase_9)" as OpenWindow
-    OpenWindow : launch Chromium incognito at 1024x768, find the window
+    OpenWindow : launch Chromium incognito at 1600x768, find the window
     state "WaitPageLoad (UseCase_1)" as WaitPageLoad
     WaitPageLoad : wait for the page, capture the window
     state BannerVisible <<choice>>
@@ -58,7 +58,7 @@ stateDiagram-v2
     CloseWindow : close Chromium, remove temporary profile
     state "Error" as Error
     Error : no handling defined yet, the app exits
-    OpenWindow --> WaitPageLoad : window found, size 1024x768
+    OpenWindow --> WaitPageLoad : window found, size 1600x768
     OpenWindow --> Error : launch fails / no window / size wrong
     WaitPageLoad --> BannerVisible : page loaded, screenshot taken
     BannerVisible --> RejectCookies : banner visible
@@ -77,7 +77,7 @@ stateDiagram-v2
 
 | State | Use cases | Description |
 |---|---|---|
-| OpenWindow | UseCase_1, UseCase_3, UseCase_9 | launch Chromium incognito at 1024x768, find the window |
+| OpenWindow | UseCase_1, UseCase_3, UseCase_9 | launch Chromium incognito at 1600x768, find the window |
 | WaitPageLoad | UseCase_1 | wait for the page, capture the window |
 | BannerVisible | – | decision |
 | RejectCookies | UseCase_2 | click ÖSSZES ELUTASÍTÁSA, verify banner is gone |
@@ -91,7 +91,7 @@ stateDiagram-v2
 
 | From | Event / guard | To |
 |---|---|---|
-| OpenWindow | window found, size 1024x768 | WaitPageLoad |
+| OpenWindow | window found, size 1600x768 | WaitPageLoad |
 | OpenWindow | launch fails / no window / size wrong | Error |
 | WaitPageLoad | page loaded, screenshot taken | BannerVisible |
 | BannerVisible | banner visible | RejectCookies |
@@ -157,17 +157,17 @@ A first version is already in the code (see "How the screenshot is read" in `../
 
 ## UseCase_3: Open the browser window at a fixed size
 **Status:** implemented
-**Description:** When the browser window is opened, it must always open at a predefined size: 1024x768.
+**Description:** When the browser window is opened, it must always open at a predefined size: 1600x768 (originally 1024x768, changed on request).
 **Preconditions:** X11 session; Chromium is being launched by UseCase_1.
 **Steps / expected behaviour:**
-1. Launch Chromium with `--window-size=1024,768` and `--window-position=0,0`.
+1. Launch Chromium with `--window-size=1600,768` and `--window-position=0,0`.
 2. After the window is found, read its size with `xdotool getwindowgeometry --shell`.
 3. If the size differs, set it with `xdotool windowsize` and check again (up to 3 tries).
-**Success:** The window is 1024x768 before the page-load wait and the first screenshot, so every screenshot is 1024x768.
+**Success:** The window is 1600x768 before the page-load wait and the first screenshot, so every screenshot is 1600x768.
 **Failure / edge cases:** The window manager overrides the size or keeps the window maximized. If the size is still wrong after the tries, the app exits with an error.
 **State machine:** not designed yet.
 **Notes / open questions:** The size is the outer Chromium window, meaning the X11 window that xdotool reports and ImageMagick `import` captures. Window-manager decorations around it are not counted. The size is defined by `kWindowSize` in `src/main.cpp`.
-Test: `tests/test_window_size.cpp` (`BrowserWindow.OpensAt1024x768AccordingToXdotool`) launches Chromium and checks WIDTH/HEIGHT from `xdotool getwindowgeometry --shell`. It is skipped without an X11 session, chromium or xdotool.
+Test: `tests/test_window_size.cpp` (`BrowserWindow.OpensInPredefinedWindowSize`) launches Chromium and checks WIDTH/HEIGHT from `xdotool getwindowgeometry --shell`. It is skipped without an X11 session, chromium or xdotool.
 
 ## UseCase_4: Close the browser window
 **Status:** captured
@@ -187,10 +187,10 @@ Test: `tests/test_window_size.cpp` (`BrowserWindow.OpensAt1024x768AccordingToXdo
 ## UseCase_5: Login button
 **Status:** implemented
 **Description:** Before taking a bet the user must log in. There is a "Bejelentkezés" button in the upper right corner of the page. Look for that button in the upper right corner; if found, report it and click it. These actions are logged for monitoring purposes.
-**Preconditions:** The page is loaded in the 1024x768 window (UseCase_3) and the cookie banner is handled (UseCase_2). A fresh browser profile is used every cycle, so the user is expected to be logged out.
+**Preconditions:** The page is loaded in the 1600x768 window (UseCase_3) and the cookie banner is handled (UseCase_2). A fresh browser profile is used every cycle, so the user is expected to be logged out.
 **Steps / expected behaviour:**
 1. Capture the window and run OCR on it.
-2. Search for "Bejelentkezés" only in the upper right corner: the right half of the window and its top 20% (512x154 px of the 1024x768 window).
+2. Search for "Bejelentkezés" only in the upper right corner: the right half of the window and its top 20% (800x153 px at 800,0 of the 1600x768 window).
 3. If found, log that it was found and where (click point and box), then click its center.
 4. Wait, re-capture the window and log that the button was clicked.
 **Success:** The button was found in the upper right corner and clicked. Next: EnterCredentials (UseCase_7).
@@ -225,12 +225,12 @@ Test: `tests/test_window_size.cpp` (`BrowserWindow.OpensAt1024x768AccordingToXdo
 **Success:** Both fields are filled and validated, and the popup disappeared after Enter (logged in). Next: TakeBet.
 **Failure / edge cases:** The credentials file is missing or incomplete; a label or field is not found; typing fails; the e-mail OCR text does not match; the dot count is wrong; the popup is still visible 10 seconds after Enter (e.g. wrong password). All of these are logged and lead to Error.
 **State machine:** `EnterCredentials` (see "State machine" above).
-**Notes / open questions:** Not tested against the live site yet. The reference picture (`docs/login_popup.png`) comes from a mobile browser, so the desktop popup at 1024x768 may look different. `xdotool type` depends on the X keyboard layout ("@" on a Hungarian layout). Not checked yet: an error message in the popup (e.g. wrong password) is only seen as "popup still visible". The login is submitted with Enter, not by clicking the "BEJELENTKEZÉS" button of the popup.
+**Notes / open questions:** Not tested against the live site yet. The reference picture (`docs/login_popup.png`) comes from a mobile browser, so the desktop popup at 1600x768 may look different. `xdotool type` depends on the X keyboard layout ("@" on a Hungarian layout). Not checked yet: an error message in the popup (e.g. wrong password) is only seen as "popup still visible". The login is submitted with Enter, not by clicking the "BEJELENTKEZÉS" button of the popup.
 
 ## UseCase_8: Read the list of games
 **Status:** implemented
 **Description:** After a successful login, the game type to bet on has to be identified. The games are listed horizontally in a region of the screen. Read the list of games in that region. The position of the region comes from a config file.
-**Preconditions:** The user is logged in (UseCase_7). `region_config.txt` (working directory, or the file named by `THE_APP_AI_REGION_CONFIG`) contains `GAME_LIST_REGION = [left,top] [width,height]`, in pixels of the 1024x768 window, e.g. `GAME_LIST_REGION = [0,0] [500,100]` ([0,0] is the upper left corner, 500 the width, 100 the height). The file is read at start-up; a missing file, a missing or malformed entry, or a region outside the window stops the app before the browser opens.
+**Preconditions:** The user is logged in (UseCase_7). `region_config.txt` (working directory, or the file named by `THE_APP_AI_REGION_CONFIG`) contains `GAME_LIST_REGION = [left,top] [width,height]`, in pixels of the 1600x768 window, e.g. `GAME_LIST_REGION = [0,0] [500,100]` ([0,0] is the upper left corner, 500 the width, 100 the height). The file is read at start-up; a missing file, a missing or malformed entry, or a region outside the window stops the app before the browser opens.
 **Steps / expected behaviour:**
 1. Capture the window.
 2. Run OCR on that region only: the screenshot is cropped first, so the rest of the page cannot disturb the result.
@@ -239,7 +239,7 @@ Test: `tests/test_window_size.cpp` (`BrowserWindow.OpensAt1024x768AccordingToXdo
 **Success:** At least one game was read. Next: SelectGameType (UseCase_6).
 **Failure / edge cases:** The region contains no readable text (wrong region, page not loaded, OCR fails). This is logged and leads to Error.
 **State machine:** `TakeBet / ReadGameList`, the first sub-state of the composite state `TakeBet`.
-**Notes / open questions:** The real position of the game list at 1024x768 is not known yet; `[0,0] [500,100]` is a placeholder. Games shown only as icons (no text) cannot be read by OCR. If the list is wider than the window (scrolling), only the visible games are read.
+**Notes / open questions:** The real position of the game list at 1600x768 is not known yet; `[0,0] [500,100]` is a placeholder. Games shown only as icons (no text) cannot be read by OCR. If the list is wider than the window (scrolling), only the visible games are read.
 
 ## UseCase_9: Open the page in incognito mode
 **Status:** implemented
@@ -247,8 +247,8 @@ Test: `tests/test_window_size.cpp` (`BrowserWindow.OpensAt1024x768AccordingToXdo
 **Preconditions:** Chromium is being launched by UseCase_1.
 **Steps / expected behaviour:**
 1. Launch Chromium with `--incognito`, and the url as a normal argument (after `--`, so it can never be taken for a switch).
-2. Keep the other launch options: dedicated profile directory, `--window-size=1024,768`, `--window-position=0,0`, X11.
+2. Keep the other launch options: dedicated profile directory, `--window-size=1600,768`, `--window-position=0,0`, X11.
 **Success:** The page is shown in an incognito window: no cookies, history or cache are kept after the window is closed.
 **Failure / edge cases:** Chromium fails to start or no window appears (as in UseCase_1, leads to Error).
 **State machine:** `OpenWindow` (see "State machine" above).
-**Notes / open questions:** App mode (`--app=<url>`, a window without tabs and address bar) was dropped, because app windows may ignore `--incognito`. The window now has tabs and an address bar, so the page content starts lower in the 1024x768 window. Screenshots and clicks still use window coordinates, so they keep working, but regions in `region_config.txt` must be measured on a screenshot of the incognito window. Test: `tests/test_browser.cpp` (`ChromiumOpensUrlInIncognitoWindowAtGivenSize`) checks the launch command.
+**Notes / open questions:** App mode (`--app=<url>`, a window without tabs and address bar) was dropped, because app windows may ignore `--incognito`. The window now has tabs and an address bar, so the page content starts lower in the 1600x768 window. Screenshots and clicks still use window coordinates, so they keep working, but regions in `region_config.txt` must be measured on a screenshot of the incognito window. Test: `tests/test_browser.cpp` (`ChromiumOpensUrlInIncognitoWindowAtGivenSize`) checks the launch command.
